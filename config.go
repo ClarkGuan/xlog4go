@@ -27,13 +27,7 @@ type LogConfig struct {
 	CW    ConfConsoleWriter `json:"ConsoleWriter"`
 }
 
-func SetupLogWithJson(cnt []byte) (err error) {
-	var lc LogConfig
-
-	if err = json.Unmarshal(cnt, &lc); err != nil {
-		return
-	}
-
+func SetupLogWithPtr(lc *LogConfig) (err error) {
 	if lc.FW.On {
 		if len(lc.FW.LogPath) > 0 {
 			w := NewFileWriter()
@@ -89,6 +83,16 @@ func SetupLogWithJson(cnt []byte) (err error) {
 		err = errors.New("Invalid log level")
 	}
 	return
+}
+
+func SetupLogWithJson(cnt []byte) (err error) {
+	var lc LogConfig
+
+	if err = json.Unmarshal(cnt, &lc); err != nil {
+		return
+	}
+
+	return SetupLogWithPtr(&lc)
 }
 
 func SetupLogWithFile(file string) (err error) {
