@@ -27,10 +27,8 @@ type LogConfig struct {
 	CW    ConfConsoleWriter `json:"ConsoleWriter"`
 }
 
-func SetupLogWithConf(file string) (err error) {
+func SetupLogWithJson(cnt []byte) (err error) {
 	var lc LogConfig
-
-	cnt, err := ioutil.ReadFile(file)
 
 	if err = json.Unmarshal(cnt, &lc); err != nil {
 		return
@@ -91,4 +89,12 @@ func SetupLogWithConf(file string) (err error) {
 		err = errors.New("Invalid log level")
 	}
 	return
+}
+
+func SetupLogWithFile(file string) (err error) {
+	if cnt, err := ioutil.ReadFile(file); err != nil {
+		return err
+	} else {
+		return SetupLogWithJson(cnt)
+	}
 }
