@@ -11,6 +11,7 @@ import (
 )
 
 var pathVariableTable map[byte]func(*time.Time) int
+const MINMAXSIZE = 512 << 20
 
 type FileWriter struct {
 	logLevelFloor int
@@ -21,6 +22,7 @@ type FileWriter struct {
 	fileBufWriter *bufio.Writer
 	actions       []func(*time.Time) int
 	variables     []interface{}
+	maxSize       int64
 }
 
 func NewFileWriter() *FileWriter {
@@ -170,8 +172,18 @@ func (w *FileWriter) Flush() error {
 	return nil
 }
 
+func (w *FileWriter) setMaxSize(s int64) {
+	if s > MINMAXSIZE {
+		w.maxSize = s
+	}
+}
+
 func (w *FileWriter) MaxSize() int64 {
-	return 1<<30  //1G
+	if w.maxSize <= MINMAXSIZE {
+		w.maxSize = MINMAXSIZE
+	}
+
+	return w.maxSize
 }
 
 func (w *FileWriter) Size() int64 {

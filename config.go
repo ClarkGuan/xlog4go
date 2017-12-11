@@ -10,8 +10,10 @@ type ConfFileWriter struct {
 	On              bool   `json:"On"`
 	LogPath         string `json:"LogPath"`
 	RotateLogPath   string `json:"RotateLogPath"`
+	RotateLogSize   int64  `json:"RotateLogSize"`
 	WfLogPath       string `json:"WfLogPath"`
 	RotateWfLogPath string `json:"RotateWfLogPath"`
+	RotateWfLogSize int64  `json:"RotateWfLogSize"`
 }
 
 type ConfConsoleWriter struct {
@@ -39,6 +41,7 @@ func SetupLogWithConf(file string) (err error) {
 			w := NewFileWriter()
 			w.SetFileName(lc.FW.LogPath)
 			w.SetPathPattern(lc.FW.RotateLogPath)
+			w.setMaxSize(lc.FW.RotateLogSize)
 			w.SetLogLevelFloor(TRACE)
 			if len(lc.FW.WfLogPath) > 0 {
 				w.SetLogLevelCeil(INFO)
@@ -52,6 +55,7 @@ func SetupLogWithConf(file string) (err error) {
 			wfw := NewFileWriter()
 			wfw.SetFileName(lc.FW.WfLogPath)
 			wfw.SetPathPattern(lc.FW.RotateWfLogPath)
+			wfw.setMaxSize(lc.FW.RotateWfLogSize)
 			wfw.SetLogLevelFloor(WARNING)
 			wfw.SetLogLevelCeil(ERROR)
 			Register(wfw)
