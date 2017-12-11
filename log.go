@@ -51,6 +51,11 @@ type Flusher interface {
 	Flush() error
 }
 
+type SizeLimiter interface {
+	MaxSize() int64
+	Size() int64
+}
+
 type Logger struct {
 	writers     []Writer
 	tunnel      chan *Record
@@ -218,13 +223,27 @@ func boostrapLogWriter(logger *Logger) {
 
 		case <-rotateTimer.C:
 			for _, w := range logger.writers {
-				if r, ok := w.(Rotater); ok {
-					if err := r.Rotate(); err != nil {
-						log.Println(err)
-					}
-				}
+				limitWriterRotated(w)
 			}
 			rotateTimer.Reset(time.Second * 10)
+		}
+	}
+}
+
+func limitWriterRotated(writer Writer) {
+	if l, ok := writer.(SizeLimiter); ok {
+		if l.Size() >= l.MaxSize() {
+			writerRotated(writer)
+		}
+	} else {
+		writerRotated(writer)
+	}
+}
+
+func writerRotated(writer Writer) {
+	if r, ok := writer.(Rotater); ok {
+		if err := r.Rotate(); err != nil {
+			log.Println(err)
 		}
 	}
 }

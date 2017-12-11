@@ -170,6 +170,18 @@ func (w *FileWriter) Flush() error {
 	return nil
 }
 
+func (w *FileWriter) MaxSize() int64 {
+	return 1<<30  //1G
+}
+
+func (w *FileWriter) Size() int64 {
+	if info, err := w.file.Stat(); err == nil {
+		return info.Size()
+	} else {
+		return -1
+	}
+}
+
 func getYear(now *time.Time) int {
 	return now.Year()
 }
