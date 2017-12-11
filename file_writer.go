@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
 var pathVariableTable map[byte]func(*time.Time) int
+
 const MINMAXSIZE = 512 << 20
 
 type FileWriter struct {
@@ -151,7 +154,7 @@ func (w *FileWriter) Rotate() error {
 
 	if w.file != nil {
 		// 将文件以pattern形式改名并关闭
-		filePath := fmt.Sprintf(w.pathFmt, old_variables...)
+		filePath := fmt.Sprintf(w.pathFmt, old_variables...) + ".bak"
 
 		if err := os.Rename(w.filename, filePath); err != nil {
 			return err
@@ -160,9 +163,34 @@ func (w *FileWriter) Rotate() error {
 		if err := w.file.Close(); err != nil {
 			return err
 		}
+
+		// 删除之前的备份
+		if err := deleteLastBackup(filepath.Dir(filePath), filePath); err != nil {
+			return err
+		}
 	}
 
 	return w.CreateLogFile()
+}
+
+func deleteLastBackup(dir string, expects ...string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		for _, exceptFile := range expects {
+			if info.Name() == filepath.Base(exceptFile) {
+				return nil
+			}
+		}
+
+		if strings.HasSuffix(info.Name(), ".bak") {
+			return os.Remove(path)
+		}
+
+		return nil
+	})
 }
 
 func (w *FileWriter) Flush() error {
@@ -187,6 +215,10 @@ func (w *FileWriter) MaxSize() int64 {
 }
 
 func (w *FileWriter) Size() int64 {
+	if w.file == nil {
+		return -1
+	}
+
 	if info, err := w.file.Stat(); err == nil {
 		return info.Size()
 	} else {
