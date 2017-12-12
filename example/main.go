@@ -1,13 +1,13 @@
 package main
 
 import (
-	logger "github.com/shengkehua/xlog4go"
+	logger "github.com/ClarkGuan/xlog4go"
 
 	"time"
 )
 
 func main() {
-	if err := logger.SetupLogWithConf("./log.json"); err != nil {
+	if err := logger.SetupLogWithFile("./log.json"); err != nil {
 		panic(err)
 	}
 	defer logger.Close()
