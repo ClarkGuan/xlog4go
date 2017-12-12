@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -17,15 +15,16 @@ var pathVariableTable map[byte]func(*time.Time) int
 const MINMAXSIZE = 512 << 20
 
 type FileWriter struct {
-	logLevelFloor int
-	logLevelCeil  int
-	filename      string
-	pathFmt       string
-	file          *os.File
-	fileBufWriter *bufio.Writer
-	actions       []func(*time.Time) int
-	variables     []interface{}
-	maxSize       int64
+	logLevelFloor  int
+	logLevelCeil   int
+	filename       string
+	pathFmt        string
+	lastBackupName string
+	file           *os.File
+	fileBufWriter  *bufio.Writer
+	actions        []func(*time.Time) int
+	variables      []interface{}
+	maxSize        int64
 }
 
 func NewFileWriter() *FileWriter {
@@ -154,7 +153,7 @@ func (w *FileWriter) Rotate() error {
 
 	if w.file != nil {
 		// 将文件以pattern形式改名并关闭
-		filePath := fmt.Sprintf(w.pathFmt, old_variables...) + ".bak"
+		filePath := fmt.Sprintf(w.pathFmt, old_variables...)
 
 		if err := os.Rename(w.filename, filePath); err != nil {
 			return err
@@ -164,33 +163,18 @@ func (w *FileWriter) Rotate() error {
 			return err
 		}
 
-		// 删除之前的备份
-		if err := deleteLastBackup(filepath.Dir(filePath), filePath); err != nil {
-			return err
+		lbn := w.lastBackupName
+		w.lastBackupName = filePath
+
+		if len(lbn) > 0 {
+			// 删除之前的备份
+			if err := os.Remove(w.lastBackupName); err != nil {
+				return err
+			}
 		}
 	}
 
 	return w.CreateLogFile()
-}
-
-func deleteLastBackup(dir string, expects ...string) error {
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		for _, exceptFile := range expects {
-			if info.Name() == filepath.Base(exceptFile) {
-				return nil
-			}
-		}
-
-		if strings.HasSuffix(info.Name(), ".bak") {
-			return os.Remove(path)
-		}
-
-		return nil
-	})
 }
 
 func (w *FileWriter) Flush() error {
