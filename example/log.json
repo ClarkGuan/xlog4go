@@ -6,11 +6,9 @@
 
         "LogPath" : "./demo.log.info",
         "RotateLogPath" : "./demo.log.info-%Y%M%D%H",
-        "RotateLogSize ": 1073741824,
 
         "WfLogPath" : "./demo.log.wf",
-        "RotateWfLogPath" : "./demo.log.wf-%Y%M%D%H",
-        "RotateWfLogSize" : 1073741824
+        "RotateWfLogPath" : "./demo.log.wf-%Y%M%D%H"
     },
 
     "ConsoleWriter" : {

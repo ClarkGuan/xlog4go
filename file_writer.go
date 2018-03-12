@@ -12,19 +12,15 @@ import (
 
 var pathVariableTable map[byte]func(*time.Time) int
 
-const MINMAXSIZE = 512 << 20
-
 type FileWriter struct {
-	logLevelFloor  int
-	logLevelCeil   int
-	filename       string
-	pathFmt        string
-	lastBackupName string
-	file           *os.File
-	fileBufWriter  *bufio.Writer
-	actions        []func(*time.Time) int
-	variables      []interface{}
-	maxSize        int64
+	logLevelFloor int
+	logLevelCeil  int
+	filename      string
+	pathFmt       string
+	file          *os.File
+	fileBufWriter *bufio.Writer
+	actions       []func(*time.Time) int
+	variables     []interface{}
 }
 
 func NewFileWriter() *FileWriter {
@@ -162,16 +158,6 @@ func (w *FileWriter) Rotate() error {
 		if err := w.file.Close(); err != nil {
 			return err
 		}
-
-		lbn := w.lastBackupName
-		w.lastBackupName = filePath
-
-		if len(lbn) > 0 {
-			// 删除之前的备份
-			if err := os.Remove(w.lastBackupName); err != nil {
-				return err
-			}
-		}
 	}
 
 	return w.CreateLogFile()
@@ -182,32 +168,6 @@ func (w *FileWriter) Flush() error {
 		return w.fileBufWriter.Flush()
 	}
 	return nil
-}
-
-func (w *FileWriter) setMaxSize(s int64) {
-	if s > MINMAXSIZE {
-		w.maxSize = s
-	}
-}
-
-func (w *FileWriter) MaxSize() int64 {
-	if w.maxSize <= MINMAXSIZE {
-		w.maxSize = MINMAXSIZE
-	}
-
-	return w.maxSize
-}
-
-func (w *FileWriter) Size() int64 {
-	if w.file == nil {
-		return -1
-	}
-
-	if info, err := w.file.Stat(); err == nil {
-		return info.Size()
-	} else {
-		return -1
-	}
 }
 
 func getYear(now *time.Time) int {
