@@ -121,7 +121,6 @@ func (w *FileWriter) CreateLogFile() error {
 }
 
 func (w *FileWriter) Rotate() error {
-
 	now := time.Now()
 	v := 0
 	rotate := false
@@ -149,7 +148,8 @@ func (w *FileWriter) Rotate() error {
 
 	if w.file != nil {
 		// 将文件以pattern形式改名并关闭
-		filePath := fmt.Sprintf(w.pathFmt, old_variables...)
+		filePath := fmt.Sprintf("%s.bak", w.filename)
+		os.Remove(filePath)
 
 		if err := os.Rename(w.filename, filePath); err != nil {
 			return err
