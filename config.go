@@ -10,10 +10,8 @@ type ConfFileWriter struct {
 	On              bool   `json:"On"`
 	LogPath         string `json:"LogPath"`
 	RotateLogPath   string `json:"RotateLogPath"`
-	LogRetain       int    `json:"LogRetain"`
 	WfLogPath       string `json:"WfLogPath"`
 	RotateWfLogPath string `json:"RotateWfLogPath"`
-	WfLogRetain     int    `json:"WfLogRetain"`
 }
 
 type ConfConsoleWriter struct {
@@ -39,7 +37,6 @@ func SetupLogWithPtr(lc *LogConfig) (err error) {
 			} else {
 				w.SetLogLevelCeil(ERROR)
 			}
-			w.SetRetainHour(lc.FW.LogRetain)
 			Register(w)
 		}
 
@@ -49,7 +46,6 @@ func SetupLogWithPtr(lc *LogConfig) (err error) {
 			wfw.SetPathPattern(lc.FW.RotateWfLogPath)
 			wfw.SetLogLevelFloor(WARNING)
 			wfw.SetLogLevelCeil(ERROR)
-			wfw.SetRetainHour(lc.FW.WfLogRetain)
 			Register(wfw)
 		}
 	}
