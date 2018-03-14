@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type FileWriter struct {
 	fileBufWriter *bufio.Writer
 	actions       []func(*time.Time) int
 	variables     []interface{}
+	retain        int // 保留日志时长，单位：小时
 }
 
 func NewFileWriter() *FileWriter {
@@ -29,6 +31,37 @@ func NewFileWriter() *FileWriter {
 
 func (w *FileWriter) Init() error {
 	return w.CreateLogFile()
+}
+
+func (w *FileWriter) SetRetainHour(r int) {
+	if r < 1 {
+		r = 1
+	}
+	w.retain = r
+}
+
+func (w *FileWriter) clearRetainLogFile() {
+	now := time.Now()
+	baseName := path.Base(w.filename)
+	dirName := path.Dir(w.filename)
+	if dir, err := os.Open(dirName); err == nil {
+		if infos, err := dir.Readdir(-1); err == nil {
+			for _, info := range infos {
+				infoName := info.Name()
+				if !strings.HasPrefix(infoName, baseName) {
+					continue
+				}
+
+				if infoName == baseName {
+					continue
+				}
+
+				if now.Sub(info.ModTime()) >= time.Duration(w.retain)*time.Hour {
+					fmt.Println(os.Remove(path.Join(dirName, infoName)))
+				}
+			}
+		}
+	}
 }
 
 func (w *FileWriter) SetFileName(filename string) {
@@ -140,6 +173,9 @@ func (w *FileWriter) Rotate() error {
 	if rotate == false {
 		return nil
 	}
+
+	// 删除超时的日志文件
+	w.clearRetainLogFile()
 
 	if w.fileBufWriter != nil {
 		if err := w.fileBufWriter.Flush(); err != nil {
